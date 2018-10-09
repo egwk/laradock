@@ -157,6 +157,7 @@ services:
       volumes:
         - ./php-fpm/php${PHP_VERSION}.ini:/usr/local/etc/php/php.ini
         - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
+        - ${SHARED_DATA_PATH}:/shared
       expose:
         - "9000"
       extra_hosts:
@@ -287,6 +288,7 @@ services:
       volumes:
         - ${DATA_PATH_HOST}/mysql:/var/lib/mysql
         - ${MYSQL_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
+        - ${SHARED_DATA_PATH}:/shared
       ports:
         - "${MYSQL_PORT}:3306"
       networks:
@@ -330,6 +332,7 @@ services:
       volumes:
         - ${DATA_PATH_HOST}/mariadb:/var/lib/mysql
         - ${MARIADB_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
+        - ${SHARED_DATA_PATH}:/shared
       ports:
         - "${MARIADB_PORT}:3306"
       environment:
@@ -346,6 +349,7 @@ services:
       volumes:
         - ${DATA_PATH_HOST}/postgres:/var/lib/postgresql/data
         - ${POSTGRES_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
+        - ${SHARED_DATA_PATH}:/shared
       ports:
         - "${POSTGRES_PORT}:5432"
       environment:
@@ -682,6 +686,47 @@ services:
       ports:
         - "${GRAFANA_PORT}:3000"
       networks:
+        - backend
+
+### Sphinx Server #########################################
+
+    sphinx:
+####### Sphinx 3  
+#      image: macbre/sphinxsearch:latest
+#      volumes:
+#        - ./sphinx/conf/sphinx.conf:/opt/sphinx/conf/sphinx.conf
+#        - ./sphinx/data:/opt/sphinx/index
+#        # - ${DATA_SAVE_PATH}/sphinx:/opt/sphinx/index
+#        - ./logs/sphinx:/var/log/sphinx
+#      ports:
+#        - "127.0.0.1:36307:36307"
+#      networks:
+#        - backend
+####### Sphinx 2
+      image: yfix/sphinxsearch:latest
+      volumes:
+        - ./sphinx/conf:/etc/sphinxsearch
+        - ${DATA_PATH_HOST}/sphinx/data:/var/lib/sphinx/data
+        - ./sphinx/run:/var/run/sphinx
+        - ./logs/sphinx:/var/log/sphinx
+      ports:
+        - "${SPHINX_QL_PORT}:${SPHINX_QL_PORT}"
+        - "${SPHINX_API_PORT}:${SPHINX_API_PORT}"
+      networks:
+        - backend
+
+### Lilypond Server #########################################
+
+    lily:
+      build:
+        context: ./lily
+      volumes:
+        -  ${DATA_PATH_HOST}/lily/cache/:/usr/share/lilycache
+        - ./lily/code:/code
+      ports:
+        - "${LILY_PORT}:8000"
+      networks:
+        - frontend
         - backend
 
 ### Laravel Echo Server #######################################
